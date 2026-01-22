@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cat and Mouse Maze</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background-color: #87CEEB;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+        }
+        main {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.4em;
+            margin: 0 0 10px 0;
+        }
+        #game canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Help the Cat find the Mouse!</h1>
+        <div id="game"></div>
+    </main>
+
+    <script>
+        // Grid settings
+        const GRID_COLS = 4;
+        const GRID_ROWS = 8;
+        let TILE_SIZE = 80; // Will be calculated based on screen size
+
+        // Game state
+        let catX = 0;
+        let catY = 0;
+        let goalX = GRID_COLS - 1; // Bottom right
+        let goalY = GRID_ROWS - 1;
+        let won = false;
+
+        // Animation state for smooth cat movement
+        let catPixelX = 0;
+        let catPixelY = 0;
+        let catTargetX = 0;
+        let catTargetY = 0;
+        let isMoving = false;
+        const MOVE_SPEED = 0.15;
+
+        // Confetti particles
+        let confetti = [];
+
+        // Arrow button state
+        let arrowButtons = []; // Will store {x, y, dir, targetX, targetY}
+
+        // Maze walls - each cell has walls: {top, right, bottom, left}
+        let maze = [];
+
+        // Generate a perfect maze using recursive backtracking
+        function generateMaze() {
+            // Initialize maze with all walls
+            maze = [];
+            for (let y = 0; y < GRID_ROWS; y++) {
+                maze[y] = [];
+                for (let x = 0; x < GRID_COLS; x++) {
+                    maze[y][x] = {
+                        top: true,
+                        right: true,
+                        bottom: true,
+                        left: true,
+                        visited: false
+                    };
+                }
+            }
+
+            // Recursive backtracking algorithm
+            let stack = [];
+            let startX = 0;
+            let startY = 0;
+
+            maze[startY][startX].visited = true;
+            stack.push({x: startX, y: startY});
+
+            while (stack.length > 0) {
+                let current = stack[stack.length - 1];
+                let neighbors = getUnvisitedNeighbors(current.x, current.y);
+
+                if (neighbors.length > 0) {
+                    // Choose random unvisited neighbor
+                    let next = neighbors[floor(random(neighbors.length))];
+
+                    // Remove wall between current and next
+                    removeWall(current.x, current.y, next.x, next.y);
+
+                    // Mark next as visited and push to stack
+                    maze[next.y][next.x].visited = true;
+                    stack.push(next);
+                } else {
+                    // Backtrack
+                    stack.pop();
+                }
+            }
+        }
+
+        // Get unvisited neighboring cells
+        function getUnvisitedNeighbors(x, y) {
+            let neighbors = [];
+
+            // Top
+            if (y > 0 && !maze[y - 1][x].visited) {
+                neighbors.push({x: x, y: y - 1});
+            }
+            // Right
+            if (x < GRID_COLS - 1 && !maze[y][x + 1].visited) {
+                neighbors.push({x: x + 1, y: y});
+            }
+            // Bottom
+            if (y < GRID_ROWS - 1 && !maze[y + 1][x].visited) {
+                neighbors.push({x: x, y: y + 1});
+            }
+            // Left
+            if (x > 0 && !maze[y][x - 1].visited) {
+                neighbors.push({x: x - 1, y: y});
+            }
+
+            return neighbors;
+        }
+
+        // Remove wall between two adjacent cells
+        function removeWall(x1, y1, x2, y2) {
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+
+            if (dx === 1) { // Moving right
+                maze[y1][x1].right = false;
+                maze[y2][x2].left = false;
+            } else if (dx === -1) { // Moving left
+                maze[y1][x1].left = false;
+                maze[y2][x2].right = false;
+            } else if (dy === 1) { // Moving down
+                maze[y1][x1].bottom = false;
+                maze[y2][x2].top = false;
+            } else if (dy === -1) { // Moving up
+                maze[y1][x1].top = false;
+                maze[y2][x2].bottom = false;
+            }
+        }
+
+        // Check if can move from one cell to another (no wall between)
+        function canMove(fromX, fromY, toX, toY) {
+            // Check bounds
+            if (toX < 0 || toX >= GRID_COLS || toY < 0 || toY >= GRID_ROWS) {
+                return false;
+            }
+
+            let dx = toX - fromX;
+            let dy = toY - fromY;
+
+            if (dx === 1) return !maze[fromY][fromX].right;
+            if (dx === -1) return !maze[fromY][fromX].left;
+            if (dy === 1) return !maze[fromY][fromX].bottom;
+            if (dy === -1) return !maze[fromY][fromX].top;
+
+            return false;
+        }
+
+        function setup() {
+            // Calculate tile size based on screen size (mobile-friendly)
+            let maxWidth = min(windowWidth - 20, 400);
+            let maxHeight = windowHeight - 100; // Leave room for title
+
+            // Calculate tile size to fit both constraints
+            let tileSizeByWidth = floor(maxWidth / GRID_COLS);
+            let tileSizeByHeight = floor(maxHeight / GRID_ROWS);
+            TILE_SIZE = min(tileSizeByWidth, tileSizeByHeight);
+
+            // Ensure minimum tile size for playability
+            TILE_SIZE = max(TILE_SIZE, 50);
+
+            generateMaze();
+            let canvas = createCanvas(GRID_COLS * TILE_SIZE, GRID_ROWS * TILE_SIZE);
+            canvas.parent('game');
+            textAlign(CENTER, CENTER);
+
+            // Initialize cat pixel position
+            catPixelX = catX * TILE_SIZE + TILE_SIZE / 2;
+            catPixelY = catY * TILE_SIZE + TILE_SIZE / 2;
+            catTargetX = catPixelX;
+            catTargetY = catPixelY;
+        }
+
+        function draw() {
+            background('#90EE90'); // Light green grass
+
+            // Update cat animation (smooth movement)
+            catTargetX = catX * TILE_SIZE + TILE_SIZE / 2;
+            catTargetY = catY * TILE_SIZE + TILE_SIZE / 2;
+            catPixelX = lerp(catPixelX, catTargetX, MOVE_SPEED);
+            catPixelY = lerp(catPixelY, catTargetY, MOVE_SPEED);
+
+            // Check if cat is still moving
+            isMoving = dist(catPixelX, catPixelY, catTargetX, catTargetY) > 1;
+
+            // Draw grid floor
+            for (let y = 0; y < GRID_ROWS; y++) {
+                for (let x = 0; x < GRID_COLS; x++) {
+                    let px = x * TILE_SIZE;
+                    let py = y * TILE_SIZE;
+
+                    // Draw floor tile
+                    fill('#FFFACD');
+                    noStroke();
+                    rect(px, py, TILE_SIZE, TILE_SIZE);
+                }
+            }
+
+            // Draw maze walls
+            let wallThickness = max(4, TILE_SIZE * 0.08);
+            stroke('#8B4513');
+            strokeWeight(wallThickness);
+            strokeCap(SQUARE);
+
+            for (let y = 0; y < GRID_ROWS; y++) {
+                for (let x = 0; x < GRID_COLS; x++) {
+                    let px = x * TILE_SIZE;
+                    let py = y * TILE_SIZE;
+                    let cell = maze[y][x];
+
+                    // Draw walls for this cell
+                    if (cell.top) {
+                        line(px, py, px + TILE_SIZE, py);
+                    }
+                    if (cell.right) {
+                        line(px + TILE_SIZE, py, px + TILE_SIZE, py + TILE_SIZE);
+                    }
+                    if (cell.bottom) {
+                        line(px, py + TILE_SIZE, px + TILE_SIZE, py + TILE_SIZE);
+                    }
+                    if (cell.left) {
+                        line(px, py, px, py + TILE_SIZE);
+                    }
+                }
+            }
+
+            // Draw outer border (thicker)
+            strokeWeight(wallThickness * 1.5);
+            stroke('#5D2E0C');
+            noFill();
+            rect(0, 0, width, height);
+
+            // Update and draw arrow buttons for valid moves
+            updateArrowButtons();
+            drawArrowButtons();
+
+            // Draw mouse (at bottom right) with wiggle animation
+            drawMouse(goalX * TILE_SIZE + TILE_SIZE/2, goalY * TILE_SIZE + TILE_SIZE/2, frameCount);
+
+            // Draw cat with smooth position and wiggle animation
+            drawCat(catPixelX, catPixelY, frameCount, isMoving);
+
+            // Win state
+            if (won) {
+                // Update and draw confetti
+                updateConfetti();
+                drawConfetti();
+
+                // Semi-transparent overlay
+                fill(0, 0, 0, 100);
+                rect(0, 0, width, height);
+
+                // Bouncy win text (responsive size)
+                let bounce = sin(frameCount * 0.1) * 10;
+                let fontSize = min(width * 0.15, 48);
+
+                fill('#FFD700');
+                stroke('#FF8C00');
+                strokeWeight(4);
+                textSize(fontSize + sin(frameCount * 0.15) * 3);
+                text('YAY!', width/2, height/2 - fontSize + bounce);
+                text('YOU WIN!', width/2, height/2 + bounce);
+
+                textSize(fontSize * 0.4);
+                fill('#FFFFFF');
+                noStroke();
+                text('Tap to play again', width/2, height/2 + fontSize + 10);
+            }
+        }
+
+        function drawCat(x, y, time, moving) {
+            let s = TILE_SIZE / 100; // Scale factor
+
+            // Idle animation - gentle bobbing
+            let bobY = moving ? 0 : sin(time * 0.08) * 3 * s;
+            let tailWag = sin(time * 0.2) * 15 * s;
+            y += bobY;
+
+            // Tail (draw first, behind body)
+            stroke('#FFA500');
+            strokeWeight(8 * s);
+            noFill();
+            let tailBaseX = x + 25 * s;
+            let tailBaseY = y + 20 * s;
+            bezier(tailBaseX, tailBaseY,
+                   tailBaseX + 20 * s + tailWag, tailBaseY + 10 * s,
+                   tailBaseX + 30 * s + tailWag * 0.5, tailBaseY - 10 * s,
+                   tailBaseX + 25 * s, tailBaseY - 30 * s);
+
+            // Body
+            fill('#FFA500');
+            stroke('#E08000');
+            strokeWeight(3 * s);
+            ellipse(x, y + 10 * s, 70 * s, 60 * s);
+
+            // Head with slight tilt when moving
+            let headTilt = moving ? sin(time * 0.3) * 2 * s : 0;
+            fill('#FFA500');
+            ellipse(x + headTilt, y - 20 * s, 60 * s, 50 * s);
+
+            // Ears
+            triangle(x - 25 * s + headTilt, y - 30 * s, x - 15 * s + headTilt, y - 55 * s, x - 5 * s + headTilt, y - 30 * s);
+            triangle(x + 25 * s + headTilt, y - 30 * s, x + 15 * s + headTilt, y - 55 * s, x + 5 * s + headTilt, y - 30 * s);
+
+            // Inner ears
+            fill('#FFB6C1');
+            noStroke();
+            triangle(x - 22 * s + headTilt, y - 32 * s, x - 15 * s + headTilt, y - 48 * s, x - 8 * s + headTilt, y - 32 * s);
+            triangle(x + 22 * s + headTilt, y - 32 * s, x + 15 * s + headTilt, y - 48 * s, x + 8 * s + headTilt, y - 32 * s);
+
+            // Eyes - blink occasionally
+            let blink = (time % 180 < 5) ? 0.2 : 1;
+            fill('#FFFFFF');
+            stroke('#000');
+            strokeWeight(2 * s);
+            ellipse(x - 15 * s + headTilt, y - 25 * s, 18 * s, 20 * s * blink);
+            ellipse(x + 15 * s + headTilt, y - 25 * s, 18 * s, 20 * s * blink);
+
+            // Pupils (only if not blinking)
+            if (blink > 0.5) {
+                fill('#000');
+                noStroke();
+                ellipse(x - 15 * s + headTilt, y - 25 * s, 8 * s, 12 * s);
+                ellipse(x + 15 * s + headTilt, y - 25 * s, 8 * s, 12 * s);
+            }
+
+            // Nose
+            fill('#FFB6C1');
+            triangle(x + headTilt, y - 8 * s, x - 6 * s + headTilt, y - 2 * s, x + 6 * s + headTilt, y - 2 * s);
+
+            // Mouth
+            stroke('#000');
+            strokeWeight(2 * s);
+            noFill();
+            arc(x - 5 * s + headTilt, y, 10 * s, 8 * s, 0, PI);
+            arc(x + 5 * s + headTilt, y, 10 * s, 8 * s, 0, PI);
+
+            // Whiskers with wiggle
+            let whiskerWiggle = sin(time * 0.1) * 2 * s;
+            stroke('#000');
+            strokeWeight(1 * s);
+            line(x - 30 * s + headTilt, y - 5 * s, x - 50 * s + headTilt, y - 10 * s + whiskerWiggle);
+            line(x - 30 * s + headTilt, y, x - 50 * s + headTilt, y + whiskerWiggle);
+            line(x - 30 * s + headTilt, y + 5 * s, x - 50 * s + headTilt, y + 10 * s + whiskerWiggle);
+            line(x + 30 * s + headTilt, y - 5 * s, x + 50 * s + headTilt, y - 10 * s - whiskerWiggle);
+            line(x + 30 * s + headTilt, y, x + 50 * s + headTilt, y - whiskerWiggle);
+            line(x + 30 * s + headTilt, y + 5 * s, x + 50 * s + headTilt, y + 10 * s - whiskerWiggle);
+        }
+
+        function drawMouse(x, y, time) {
+            let s = TILE_SIZE / 100; // Scale factor
+
+            // Wiggle animation - mouse is nervous/excited
+            let wiggleX = sin(time * 0.15) * 2 * s;
+            let wiggleY = cos(time * 0.12) * 2 * s;
+            let earWiggle = sin(time * 0.2) * 3 * s;
+            x += wiggleX;
+            y += wiggleY;
+
+            // Tail with extra wiggle
+            let tailWiggle = sin(time * 0.25) * 20 * s;
+            stroke('#808080');
+            strokeWeight(4 * s);
+            noFill();
+            bezier(x + 20 * s, y + 15 * s,
+                   x + 40 * s + tailWiggle, y + 30 * s,
+                   x + 50 * s + tailWiggle * 0.5, y + 10 * s,
+                   x + 45 * s, y - 5 * s);
+
+            // Body
+            fill('#808080');
+            stroke('#505050');
+            strokeWeight(3 * s);
+            ellipse(x, y + 5 * s, 50 * s, 40 * s);
+
+            // Head
+            fill('#808080');
+            ellipse(x, y - 15 * s, 40 * s, 35 * s);
+
+            // Ears with wiggle
+            fill('#FFB6C1');
+            stroke('#FF8080');
+            strokeWeight(2 * s);
+            ellipse(x - 18 * s, y - 30 * s + earWiggle, 25 * s, 25 * s);
+            ellipse(x + 18 * s, y - 30 * s - earWiggle, 25 * s, 25 * s);
+
+            // Eyes - looking around nervously
+            let lookX = sin(time * 0.05) * 2 * s;
+            fill('#FFFFFF');
+            stroke('#000');
+            strokeWeight(1 * s);
+            ellipse(x - 10 * s, y - 18 * s, 14 * s, 16 * s);
+            ellipse(x + 10 * s, y - 18 * s, 14 * s, 16 * s);
+
+            // Pupils follow a pattern
+            fill('#000');
+            noStroke();
+            ellipse(x - 10 * s + lookX, y - 18 * s, 6 * s, 8 * s);
+            ellipse(x + 10 * s + lookX, y - 18 * s, 6 * s, 8 * s);
+
+            // Nose twitching
+            let noseTwitch = sin(time * 0.3) * 1 * s;
+            fill('#FFB6C1');
+            ellipse(x, y - 5 * s + noseTwitch, 10 * s, 8 * s);
+
+            // Whiskers with twitch
+            let whiskerTwitch = sin(time * 0.2) * 3 * s;
+            stroke('#000');
+            strokeWeight(1 * s);
+            line(x - 20 * s, y - 8 * s, x - 35 * s, y - 12 * s + whiskerTwitch);
+            line(x - 20 * s, y - 5 * s, x - 35 * s, y - 5 * s + whiskerTwitch);
+            line(x + 20 * s, y - 8 * s, x + 35 * s, y - 12 * s - whiskerTwitch);
+            line(x + 20 * s, y - 5 * s, x + 35 * s, y - 5 * s - whiskerTwitch);
+        }
+
+        // Confetti system
+        function spawnConfetti() {
+            confetti = [];
+            let colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181',
+                          '#AA96DA', '#FCBAD3', '#A8D8EA', '#FF9F43', '#6C5CE7'];
+
+            let confettiSize = TILE_SIZE * 0.12;
+            for (let i = 0; i < 80; i++) {
+                confetti.push({
+                    x: random(width),
+                    y: random(-height, 0),
+                    vx: random(-2, 2),
+                    vy: random(2, 5),
+                    size: random(confettiSize * 0.6, confettiSize),
+                    color: random(colors),
+                    rotation: random(TWO_PI),
+                    rotationSpeed: random(-0.2, 0.2),
+                    shape: floor(random(3)) // 0 = square, 1 = circle, 2 = star
+                });
+            }
+        }
+
+        function updateConfetti() {
+            for (let c of confetti) {
+                c.x += c.vx;
+                c.y += c.vy;
+                c.vy += 0.1; // gravity
+                c.rotation += c.rotationSpeed;
+
+                // Slow down and add wobble
+                c.vx *= 0.99;
+                c.vx += sin(frameCount * 0.1 + c.x) * 0.1;
+
+                // Reset if fallen off screen
+                if (c.y > height + 20) {
+                    c.y = random(-50, -10);
+                    c.x = random(width);
+                    c.vy = random(2, 4);
+                }
+            }
+        }
+
+        function drawConfetti() {
+            for (let c of confetti) {
+                push();
+                translate(c.x, c.y);
+                rotate(c.rotation);
+                fill(c.color);
+                noStroke();
+
+                if (c.shape === 0) {
+                    // Square
+                    rectMode(CENTER);
+                    rect(0, 0, c.size, c.size);
+                } else if (c.shape === 1) {
+                    // Circle
+                    ellipse(0, 0, c.size, c.size);
+                } else {
+                    // Star
+                    drawStar(0, 0, c.size * 0.4, c.size * 0.8, 5);
+                }
+                pop();
+            }
+        }
+
+        function drawStar(x, y, radius1, radius2, npoints) {
+            let angle = TWO_PI / npoints;
+            let halfAngle = angle / 2.0;
+            beginShape();
+            for (let a = -PI/2; a < TWO_PI - PI/2; a += angle) {
+                let sx = x + cos(a) * radius2;
+                let sy = y + sin(a) * radius2;
+                vertex(sx, sy);
+                sx = x + cos(a + halfAngle) * radius1;
+                sy = y + sin(a + halfAngle) * radius1;
+                vertex(sx, sy);
+            }
+            endShape(CLOSE);
+        }
+
+        // Get valid moves from current cat position
+        function updateArrowButtons() {
+            arrowButtons = [];
+
+            if (won || isMoving) return;
+
+            let directions = [
+                {dx: 0, dy: -1, dir: 'up'},
+                {dx: 0, dy: 1, dir: 'down'},
+                {dx: -1, dy: 0, dir: 'left'},
+                {dx: 1, dy: 0, dir: 'right'}
+            ];
+
+            for (let d of directions) {
+                let nx = catX + d.dx;
+                let ny = catY + d.dy;
+
+                // Check if movement is valid (no wall blocking)
+                if (canMove(catX, catY, nx, ny)) {
+                    arrowButtons.push({
+                        x: nx * TILE_SIZE + TILE_SIZE / 2,
+                        y: ny * TILE_SIZE + TILE_SIZE / 2,
+                        dir: d.dir,
+                        targetX: nx,
+                        targetY: ny
+                    });
+                }
+            }
+        }
+
+        // Draw arrow buttons on valid tiles
+        function drawArrowButtons() {
+            for (let btn of arrowButtons) {
+                // Pulsing animation
+                let pulse = sin(frameCount * 0.1) * (TILE_SIZE * 0.05);
+                let size = TILE_SIZE * 0.6 + pulse;
+
+                // Draw glowing circle background
+                fill(100, 200, 100, 150);
+                stroke(50, 150, 50);
+                strokeWeight(3);
+                ellipse(btn.x, btn.y, size + TILE_SIZE * 0.15, size + TILE_SIZE * 0.15);
+
+                // Draw arrow
+                fill('#FFFFFF');
+                stroke('#2c3e50');
+                strokeWeight(2);
+
+                push();
+                translate(btn.x, btn.y);
+
+                // Rotate based on direction
+                if (btn.dir === 'up') rotate(-HALF_PI);
+                else if (btn.dir === 'down') rotate(HALF_PI);
+                else if (btn.dir === 'left') rotate(PI);
+                // right is default (0)
+
+                // Draw arrow shape pointing right
+                let arrowSize = size * 0.4;
+                beginShape();
+                vertex(arrowSize, 0);
+                vertex(0, -arrowSize * 0.6);
+                vertex(0, -arrowSize * 0.25);
+                vertex(-arrowSize * 0.7, -arrowSize * 0.25);
+                vertex(-arrowSize * 0.7, arrowSize * 0.25);
+                vertex(0, arrowSize * 0.25);
+                vertex(0, arrowSize * 0.25);
+                vertex(0, arrowSize * 0.6);
+                endShape(CLOSE);
+
+                pop();
+            }
+        }
+
+        // Check if a point is inside an arrow button
+        function getClickedArrow(px, py) {
+            for (let btn of arrowButtons) {
+                let d = dist(px, py, btn.x, btn.y);
+                if (d < TILE_SIZE * 0.5) { // Click radius based on tile size
+                    return btn;
+                }
+            }
+            return null;
+        }
+
+        // Move cat to a new position
+        function moveCat(newX, newY) {
+            if (canMove(catX, catY, newX, newY)) {
+                catX = newX;
+                catY = newY;
+
+                // Check win condition
+                if (catX === goalX && catY === goalY) {
+                    won = true;
+                    spawnConfetti();
+                }
+            }
+        }
+
+        // Handle mouse clicks
+        function mousePressed() {
+            if (won) {
+                resetGame();
+                return false;
+            }
+
+            let clicked = getClickedArrow(mouseX, mouseY);
+            if (clicked) {
+                moveCat(clicked.targetX, clicked.targetY);
+            }
+            return false;
+        }
+
+        // Handle touch (for tablets/phones)
+        function touchStarted() {
+            if (won) {
+                resetGame();
+                return false;
+            }
+
+            if (touches.length > 0) {
+                let clicked = getClickedArrow(touches[0].x, touches[0].y);
+                if (clicked) {
+                    moveCat(clicked.targetX, clicked.targetY);
+                }
+            }
+            return false;
+        }
+
+        function keyPressed() {
+            if (won) {
+                if (keyCode === 32) { // Space
+                    resetGame();
+                }
+                return false;
+            }
+
+            let newX = catX;
+            let newY = catY;
+
+            if (keyCode === LEFT_ARROW) {
+                newX = catX - 1;
+            } else if (keyCode === RIGHT_ARROW) {
+                newX = catX + 1;
+            } else if (keyCode === UP_ARROW) {
+                newY = catY - 1;
+            } else if (keyCode === DOWN_ARROW) {
+                newY = catY + 1;
+            }
+
+            moveCat(newX, newY);
+
+            // Prevent default arrow key behavior (scrolling)
+            return false;
+        }
+
+        function resetGame() {
+            catX = 0;
+            catY = 0;
+            won = false;
+            generateMaze();
+
+            // Reset cat pixel position
+            catPixelX = catX * TILE_SIZE + TILE_SIZE / 2;
+            catPixelY = catY * TILE_SIZE + TILE_SIZE / 2;
+            catTargetX = catPixelX;
+            catTargetY = catPixelY;
+
+            // Clear confetti
+            confetti = [];
+        }
+
+        // Handle window resize (orientation change on mobile)
+        function windowResized() {
+            let maxWidth = min(windowWidth - 20, 400);
+            let maxHeight = windowHeight - 100;
+
+            let tileSizeByWidth = floor(maxWidth / GRID_COLS);
+            let tileSizeByHeight = floor(maxHeight / GRID_ROWS);
+            TILE_SIZE = min(tileSizeByWidth, tileSizeByHeight);
+            TILE_SIZE = max(TILE_SIZE, 50);
+
+            resizeCanvas(GRID_COLS * TILE_SIZE, GRID_ROWS * TILE_SIZE);
+
+            // Update cat pixel position for new tile size
+            catPixelX = catX * TILE_SIZE + TILE_SIZE / 2;
+            catPixelY = catY * TILE_SIZE + TILE_SIZE / 2;
+            catTargetX = catPixelX;
+            catTargetY = catPixelY;
+        }
+    </script>
+</body>
+</html>
