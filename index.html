@@ -35,6 +35,9 @@
             color: #333;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         .game-card:hover {
             transform: translateY(-5px);
@@ -44,7 +47,7 @@
             width: 80px;
             height: 80px;
             border-radius: 12px;
-            margin-bottom: 10px;
+            flex-shrink: 0;
         }
         .game-card h2 {
             margin: 0 0 10px 0;
@@ -62,8 +65,10 @@
     <div class="games">
         <a href="cat-mouse-maze.html" class="game-card">
             <img src="icon-192.png" alt="Cat & Mouse">
-            <h2>Cat & Mouse</h2>
-            <p>Help the cat navigate the maze to find the mouse!</p>
+            <div>
+                <h2>Cat & Mouse</h2>
+                <p>Help the cat navigate the maze to find the mouse!</p>
+            </div>
         </a>
     </div>
 </body>
