@@ -2,10 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=cat-mouse-maze.html">
-    <title>Cat & Mouse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiny Games</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .games {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .game-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.3em;
+        }
+        .game-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-    <p>Redirecting to <a href="cat-mouse-maze.html">Cat & Mouse Maze</a>...</p>
+    <h1>Tiny Games</h1>
+    <div class="games">
+        <a href="cat-mouse-maze.html" class="game-card">
+            <h2>Cat & Mouse</h2>
+            <p>Help the cat navigate the maze to find the mouse!</p>
+        </a>
+    </div>
 </body>
 </html>
