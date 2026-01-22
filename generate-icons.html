@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate App Icons</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        .icon-container {
+            display: inline-block;
+            margin: 20px;
+        }
+        button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        a {
+            display: block;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cat & Mouse App Icons</h1>
+    <p>Click the buttons below to download each icon, then save them in the same folder as the game.</p>
+
+    <div class="icon-container">
+        <h3>192x192</h3>
+        <canvas id="icon192" width="192" height="192"></canvas>
+        <br>
+        <a id="download192" download="icon-192.png">Download icon-192.png</a>
+    </div>
+
+    <div class="icon-container">
+        <h3>512x512</h3>
+        <canvas id="icon512" width="512" height="512"></canvas>
+        <br>
+        <a id="download512" download="icon-512.png">Download icon-512.png</a>
+    </div>
+
+    <script>
+        function drawCatIcon(canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const s = size / 100;
+
+            // Background
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw a circular background
+            ctx.fillStyle = '#FFFACD';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size * 0.42, 0, Math.PI * 2);
+            ctx.fill();
+
+            const cx = size / 2;
+            const cy = size / 2 + 5 * s;
+
+            // Cat face
+            ctx.fillStyle = '#FFA500';
+            ctx.strokeStyle = '#E08000';
+            ctx.lineWidth = 2 * s;
+
+            // Head
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, 30 * s, 25 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Ears
+            ctx.beginPath();
+            ctx.moveTo(cx - 22 * s, cy - 15 * s);
+            ctx.lineTo(cx - 15 * s, cy - 35 * s);
+            ctx.lineTo(cx - 5 * s, cy - 15 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + 22 * s, cy - 15 * s);
+            ctx.lineTo(cx + 15 * s, cy - 35 * s);
+            ctx.lineTo(cx + 5 * s, cy - 15 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Inner ears
+            ctx.fillStyle = '#FFB6C1';
+            ctx.beginPath();
+            ctx.moveTo(cx - 19 * s, cy - 16 * s);
+            ctx.lineTo(cx - 15 * s, cy - 28 * s);
+            ctx.lineTo(cx - 9 * s, cy - 16 * s);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + 19 * s, cy - 16 * s);
+            ctx.lineTo(cx + 15 * s, cy - 28 * s);
+            ctx.lineTo(cx + 9 * s, cy - 16 * s);
+            ctx.closePath();
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = '#FFFFFF';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5 * s;
+
+            ctx.beginPath();
+            ctx.ellipse(cx - 10 * s, cy - 5 * s, 8 * s, 10 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(cx + 10 * s, cy - 5 * s, 8 * s, 10 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Pupils
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(cx - 10 * s, cy - 5 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.ellipse(cx + 10 * s, cy - 5 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Nose
+            ctx.fillStyle = '#FFB6C1';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + 5 * s);
+            ctx.lineTo(cx - 4 * s, cy + 10 * s);
+            ctx.lineTo(cx + 4 * s, cy + 10 * s);
+            ctx.closePath();
+            ctx.fill();
+
+            // Mouth
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5 * s;
+            ctx.beginPath();
+            ctx.arc(cx - 4 * s, cy + 13 * s, 5 * s, 0, Math.PI);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx + 4 * s, cy + 13 * s, 5 * s, 0, Math.PI);
+            ctx.stroke();
+
+            // Whiskers
+            ctx.lineWidth = 1 * s;
+            ctx.beginPath();
+            ctx.moveTo(cx - 25 * s, cy + 5 * s);
+            ctx.lineTo(cx - 35 * s, cy);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx - 25 * s, cy + 10 * s);
+            ctx.lineTo(cx - 35 * s, cy + 10 * s);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + 25 * s, cy + 5 * s);
+            ctx.lineTo(cx + 35 * s, cy);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx + 25 * s, cy + 10 * s);
+            ctx.lineTo(cx + 35 * s, cy + 10 * s);
+            ctx.stroke();
+        }
+
+        // Draw icons
+        const canvas192 = document.getElementById('icon192');
+        const canvas512 = document.getElementById('icon512');
+
+        drawCatIcon(canvas192);
+        drawCatIcon(canvas512);
+
+        // Set up download links
+        document.getElementById('download192').href = canvas192.toDataURL('image/png');
+        document.getElementById('download512').href = canvas512.toDataURL('image/png');
+    </script>
+</body>
+</html>
