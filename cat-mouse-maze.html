@@ -54,17 +54,9 @@
             font-size: 0.9em;
             color: #2c3e50;
         }
-        .theme-toggle label {
-            cursor: pointer;
+        .theme-toggle span.label {
             padding: 5px 10px;
             border-radius: 15px;
-            transition: background-color 0.2s;
-        }
-        .theme-toggle label:hover {
-            background-color: rgba(255,255,255,0.3);
-        }
-        .theme-toggle input[type="checkbox"] {
-            display: none;
         }
         .toggle-switch {
             position: relative;
@@ -74,6 +66,7 @@
             border-radius: 13px;
             cursor: pointer;
             transition: background-color 0.3s;
+            -webkit-tap-highlight-color: transparent;
         }
         .toggle-switch::after {
             content: '';
@@ -85,11 +78,12 @@
             background-color: white;
             border-radius: 50%;
             transition: transform 0.3s;
+            pointer-events: none;
         }
-        .theme-toggle input:checked + .toggle-switch {
+        .toggle-switch.active {
             background-color: #FF69B4;
         }
-        .theme-toggle input:checked + .toggle-switch::after {
+        .toggle-switch.active::after {
             transform: translateX(24px);
         }
     </style>
@@ -97,10 +91,9 @@
 <body>
     <main>
         <div class="theme-toggle">
-            <label for="themeSwitch">Cat & Mouse</label>
-            <input type="checkbox" id="themeSwitch" onchange="toggleTheme()">
-            <span class="toggle-switch" onclick="document.getElementById('themeSwitch').click()"></span>
-            <label for="themeSwitch">Girl & Muffin</label>
+            <span class="label">Cat & Mouse</span>
+            <span class="toggle-switch" id="themeSwitch"></span>
+            <span class="label">Girl & Muffin</span>
         </div>
         <h1 id="gameTitle">Help the Cat find the Mouse!</h1>
         <div id="game"></div>
@@ -135,6 +128,12 @@
 
         function toggleTheme() {
             currentTheme = currentTheme === 'catmouse' ? 'girlmuffin' : 'catmouse';
+            let toggle = document.getElementById('themeSwitch');
+            if (currentTheme === 'girlmuffin') {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
             updateTitle();
         }
 
@@ -146,6 +145,16 @@
                 titleEl.textContent = 'Help the Girl find the Muffin!';
             }
         }
+
+        // Setup toggle event listeners when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            let toggle = document.getElementById('themeSwitch');
+            toggle.addEventListener('click', toggleTheme);
+            toggle.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                toggleTheme();
+            });
+        });
 
         // Arrow button state
         let arrowButtons = []; // Will store {x, y, dir, targetX, targetY}
