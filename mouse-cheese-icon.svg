@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Background -->
+  <rect width="192" height="192" rx="24" fill="#DEB887"/>
+
+  <!-- Wood grain lines -->
+  <g stroke="#C4A574" stroke-width="1" opacity="0.5">
+    <line x1="0" y1="40" x2="50" y2="40"/>
+    <line x1="30" y1="60" x2="80" y2="60"/>
+    <line x1="0" y1="80" x2="50" y2="80"/>
+    <line x1="30" y1="100" x2="80" y2="100"/>
+    <line x1="100" y1="40" x2="150" y2="40"/>
+    <line x1="130" y1="60" x2="180" y2="60"/>
+    <line x1="100" y1="80" x2="150" y2="80"/>
+    <line x1="130" y1="100" x2="180" y2="100"/>
+    <line x1="0" y1="120" x2="50" y2="120"/>
+    <line x1="100" y1="140" x2="192" y2="140"/>
+  </g>
+
+  <!-- Cheese (bottom right) -->
+  <g transform="translate(130, 130)">
+    <!-- Main wedge -->
+    <polygon points="-30,20 30,20 20,-25 -20,-15" fill="#FFD700" stroke="#DAA520" stroke-width="2"/>
+    <!-- Top surface -->
+    <polygon points="-20,-15 20,-25 12,-30 -12,-20" fill="#FFEC8B" stroke="#DAA520" stroke-width="1"/>
+    <!-- Holes -->
+    <ellipse cx="-5" cy="5" rx="8" ry="6" fill="#DAA520"/>
+    <ellipse cx="12" cy="8" rx="6" ry="5" fill="#DAA520"/>
+    <ellipse cx="5" cy="-8" rx="5" ry="4" fill="#DAA520"/>
+  </g>
+
+  <!-- Mouse (top left area) -->
+  <g transform="translate(60, 70)">
+    <!-- Tail -->
+    <path d="M15,10 Q35,25 40,5 Q42,-10 35,-15" fill="none" stroke="#808080" stroke-width="4" stroke-linecap="round"/>
+    <!-- Body -->
+    <ellipse cx="0" cy="5" rx="28" ry="22" fill="#808080" stroke="#505050" stroke-width="2"/>
+    <!-- Head -->
+    <ellipse cx="0" cy="-12" rx="22" ry="18" fill="#808080" stroke="#505050" stroke-width="2"/>
+    <!-- Ears -->
+    <ellipse cx="-14" cy="-28" rx="14" ry="14" fill="#FFB6C1" stroke="#FF8080" stroke-width="2"/>
+    <ellipse cx="14" cy="-28" rx="14" ry="14" fill="#FFB6C1" stroke="#FF8080" stroke-width="2"/>
+    <!-- Eyes -->
+    <ellipse cx="-7" cy="-14" rx="6" ry="7" fill="white" stroke="#000" stroke-width="1"/>
+    <ellipse cx="7" cy="-14" rx="6" ry="7" fill="white" stroke="#000" stroke-width="1"/>
+    <!-- Pupils -->
+    <ellipse cx="-5" cy="-14" rx="3" ry="4" fill="#000"/>
+    <ellipse cx="9" cy="-14" rx="3" ry="4" fill="#000"/>
+    <!-- Nose -->
+    <ellipse cx="0" cy="-2" rx="5" ry="4" fill="#FFB6C1"/>
+    <!-- Whiskers -->
+    <g stroke="#000" stroke-width="1">
+      <line x1="-12" y1="-5" x2="-25" y2="-8"/>
+      <line x1="-12" y1="-2" x2="-25" y2="-2"/>
+      <line x1="12" y1="-5" x2="25" y2="-8"/>
+      <line x1="12" y1="-2" x2="25" y2="-2"/>
+    </g>
+  </g>
+
+  <!-- Small trap hint (middle) -->
+  <g transform="translate(130, 60)">
+    <rect x="-15" y="-8" width="30" height="16" rx="2" fill="#8B4513" stroke="#5D2E0C" stroke-width="1"/>
+    <rect x="-12" y="-12" width="24" height="3" fill="#808080" stroke="#404040" stroke-width="0.5"/>
+    <ellipse cx="0" cy="2" rx="5" ry="3" fill="#CD853F"/>
+  </g>
+</svg>
