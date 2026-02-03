@@ -45,11 +45,64 @@
             display: block;
             margin: 0 auto;
         }
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #2c3e50;
+        }
+        .theme-toggle label {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 15px;
+            transition: background-color 0.2s;
+        }
+        .theme-toggle label:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        .theme-toggle input[type="checkbox"] {
+            display: none;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background-color: #FFA500;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .theme-toggle input:checked + .toggle-switch {
+            background-color: #FF69B4;
+        }
+        .theme-toggle input:checked + .toggle-switch::after {
+            transform: translateX(24px);
+        }
     </style>
 </head>
 <body>
     <main>
-        <h1>Help the Cat find the Mouse!</h1>
+        <div class="theme-toggle">
+            <label for="themeSwitch">Cat & Mouse</label>
+            <input type="checkbox" id="themeSwitch" onchange="toggleTheme()">
+            <span class="toggle-switch" onclick="document.getElementById('themeSwitch').click()"></span>
+            <label for="themeSwitch">Girl & Muffin</label>
+        </div>
+        <h1 id="gameTitle">Help the Cat find the Mouse!</h1>
         <div id="game"></div>
     </main>
 
@@ -76,6 +129,23 @@
 
         // Confetti particles
         let confetti = [];
+
+        // Theme: 'catmouse' or 'girlmuffin'
+        let currentTheme = 'catmouse';
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'catmouse' ? 'girlmuffin' : 'catmouse';
+            updateTitle();
+        }
+
+        function updateTitle() {
+            let titleEl = document.getElementById('gameTitle');
+            if (currentTheme === 'catmouse') {
+                titleEl.textContent = 'Help the Cat find the Mouse!';
+            } else {
+                titleEl.textContent = 'Help the Girl find the Muffin!';
+            }
+        }
 
         // Arrow button state
         let arrowButtons = []; // Will store {x, y, dir, targetX, targetY}
@@ -279,11 +349,19 @@
             updateArrowButtons();
             drawArrowButtons();
 
-            // Draw mouse (at bottom right) with wiggle animation
-            drawMouse(goalX * TILE_SIZE + TILE_SIZE/2, goalY * TILE_SIZE + TILE_SIZE/2, frameCount);
+            // Draw goal (mouse or muffin) at bottom right with animation
+            if (currentTheme === 'catmouse') {
+                drawMouse(goalX * TILE_SIZE + TILE_SIZE/2, goalY * TILE_SIZE + TILE_SIZE/2, frameCount);
+            } else {
+                drawMuffin(goalX * TILE_SIZE + TILE_SIZE/2, goalY * TILE_SIZE + TILE_SIZE/2, frameCount);
+            }
 
-            // Draw cat with smooth position and wiggle animation
-            drawCat(catPixelX, catPixelY, frameCount, isMoving);
+            // Draw player (cat or girl) with smooth position and animation
+            if (currentTheme === 'catmouse') {
+                drawCat(catPixelX, catPixelY, frameCount, isMoving);
+            } else {
+                drawGirl(catPixelX, catPixelY, frameCount, isMoving);
+            }
 
             // Win state
             if (won) {
@@ -456,6 +534,203 @@
             line(x - 20 * s, y - 5 * s, x - 35 * s, y - 5 * s + whiskerTwitch);
             line(x + 20 * s, y - 8 * s, x + 35 * s, y - 12 * s - whiskerTwitch);
             line(x + 20 * s, y - 5 * s, x + 35 * s, y - 5 * s - whiskerTwitch);
+        }
+
+        function drawGirl(x, y, time, moving) {
+            let s = TILE_SIZE / 100; // Scale factor
+
+            // Idle animation - gentle bobbing
+            let bobY = moving ? 0 : sin(time * 0.08) * 3 * s;
+            y += bobY;
+
+            // Hair bounce
+            let hairBounce = sin(time * 0.15) * 2 * s;
+
+            // Dress (draw first, behind body)
+            fill('#FF69B4'); // Hot pink dress
+            stroke('#DB3E8A');
+            strokeWeight(2 * s);
+            beginShape();
+            vertex(x - 25 * s, y + 10 * s);
+            vertex(x + 25 * s, y + 10 * s);
+            vertex(x + 35 * s, y + 45 * s);
+            vertex(x - 35 * s, y + 45 * s);
+            endShape(CLOSE);
+
+            // Dress details - white collar
+            fill('#FFFFFF');
+            noStroke();
+            ellipse(x, y + 5 * s, 30 * s, 12 * s);
+
+            // Arms
+            fill('#FFDAB9'); // Peach skin
+            stroke('#E5B89A');
+            strokeWeight(2 * s);
+            // Left arm
+            ellipse(x - 30 * s, y + 20 * s, 15 * s, 25 * s);
+            // Right arm
+            ellipse(x + 30 * s, y + 20 * s, 15 * s, 25 * s);
+
+            // Hands
+            fill('#FFDAB9');
+            ellipse(x - 30 * s, y + 32 * s, 12 * s, 12 * s);
+            ellipse(x + 30 * s, y + 32 * s, 12 * s, 12 * s);
+
+            // Head
+            fill('#FFDAB9');
+            stroke('#E5B89A');
+            strokeWeight(2 * s);
+            ellipse(x, y - 15 * s, 50 * s, 45 * s);
+
+            // Hair - brown pigtails
+            fill('#8B4513');
+            stroke('#6B3510');
+            strokeWeight(2 * s);
+
+            // Main hair on top
+            arc(x, y - 25 * s, 55 * s, 40 * s, PI, TWO_PI);
+
+            // Left pigtail
+            ellipse(x - 30 * s, y - 10 * s + hairBounce, 18 * s, 35 * s);
+            // Right pigtail
+            ellipse(x + 30 * s, y - 10 * s - hairBounce, 18 * s, 35 * s);
+
+            // Hair bows
+            fill('#FF69B4');
+            stroke('#DB3E8A');
+            strokeWeight(1 * s);
+            // Left bow
+            ellipse(x - 30 * s, y - 25 * s, 12 * s, 8 * s);
+            ellipse(x - 30 * s, y - 25 * s, 8 * s, 12 * s);
+            // Right bow
+            ellipse(x + 30 * s, y - 25 * s, 12 * s, 8 * s);
+            ellipse(x + 30 * s, y - 25 * s, 8 * s, 12 * s);
+
+            // Bangs
+            fill('#8B4513');
+            noStroke();
+            arc(x, y - 30 * s, 40 * s, 20 * s, PI, TWO_PI);
+
+            // Eyes - blink occasionally
+            let blink = (time % 180 < 5) ? 0.2 : 1;
+            fill('#FFFFFF');
+            stroke('#000');
+            strokeWeight(2 * s);
+            ellipse(x - 12 * s, y - 18 * s, 16 * s, 18 * s * blink);
+            ellipse(x + 12 * s, y - 18 * s, 16 * s, 18 * s * blink);
+
+            // Pupils (only if not blinking)
+            if (blink > 0.5) {
+                // Blue eyes
+                fill('#4169E1');
+                noStroke();
+                ellipse(x - 12 * s, y - 18 * s, 8 * s, 10 * s);
+                ellipse(x + 12 * s, y - 18 * s, 8 * s, 10 * s);
+
+                // Eye shine
+                fill('#FFFFFF');
+                ellipse(x - 14 * s, y - 20 * s, 3 * s, 3 * s);
+                ellipse(x + 10 * s, y - 20 * s, 3 * s, 3 * s);
+            }
+
+            // Rosy cheeks
+            fill(255, 182, 193, 150);
+            noStroke();
+            ellipse(x - 18 * s, y - 8 * s, 10 * s, 6 * s);
+            ellipse(x + 18 * s, y - 8 * s, 10 * s, 6 * s);
+
+            // Smile
+            stroke('#000');
+            strokeWeight(2 * s);
+            noFill();
+            arc(x, y - 5 * s, 20 * s, 15 * s, 0.2, PI - 0.2);
+
+            // Legs
+            fill('#FFDAB9');
+            stroke('#E5B89A');
+            strokeWeight(2 * s);
+            ellipse(x - 12 * s, y + 52 * s, 14 * s, 20 * s);
+            ellipse(x + 12 * s, y + 52 * s, 14 * s, 20 * s);
+
+            // Shoes
+            fill('#000');
+            stroke('#333');
+            ellipse(x - 12 * s, y + 60 * s, 16 * s, 10 * s);
+            ellipse(x + 12 * s, y + 60 * s, 16 * s, 10 * s);
+        }
+
+        function drawMuffin(x, y, time) {
+            let s = TILE_SIZE / 100; // Scale factor
+
+            // Wobble animation
+            let wobbleX = sin(time * 0.12) * 2 * s;
+            let wobbleY = cos(time * 0.1) * 2 * s;
+            x += wobbleX;
+            y += wobbleY;
+
+            // Muffin wrapper (paper cup)
+            fill('#F5DEB3'); // Tan/beige
+            stroke('#D2B48C');
+            strokeWeight(2 * s);
+            beginShape();
+            vertex(x - 25 * s, y + 5 * s);
+            vertex(x + 25 * s, y + 5 * s);
+            vertex(x + 20 * s, y + 35 * s);
+            vertex(x - 20 * s, y + 35 * s);
+            endShape(CLOSE);
+
+            // Wrapper ridges
+            stroke('#D2B48C');
+            strokeWeight(1 * s);
+            for (let i = -18; i <= 18; i += 6) {
+                line(x + i * s, y + 8 * s, x + i * 0.8 * s, y + 32 * s);
+            }
+
+            // Muffin top
+            fill('#D2691E'); // Chocolate brown
+            stroke('#8B4513');
+            strokeWeight(2 * s);
+
+            // Puffy muffin top using overlapping circles
+            ellipse(x, y - 5 * s, 50 * s, 35 * s);
+            ellipse(x - 18 * s, y - 8 * s, 25 * s, 25 * s);
+            ellipse(x + 18 * s, y - 8 * s, 25 * s, 25 * s);
+            ellipse(x, y - 15 * s, 30 * s, 25 * s);
+
+            // Chocolate chips
+            fill('#3D1C02');
+            noStroke();
+            ellipse(x - 10 * s, y - 5 * s, 8 * s, 6 * s);
+            ellipse(x + 8 * s, y - 12 * s, 7 * s, 5 * s);
+            ellipse(x + 15 * s, y - 2 * s, 6 * s, 5 * s);
+            ellipse(x - 5 * s, y - 18 * s, 7 * s, 5 * s);
+            ellipse(x - 18 * s, y - 10 * s, 5 * s, 4 * s);
+
+            // Cute face on muffin
+            // Eyes
+            fill('#FFFFFF');
+            stroke('#000');
+            strokeWeight(1 * s);
+            ellipse(x - 10 * s, y - 8 * s, 12 * s, 14 * s);
+            ellipse(x + 10 * s, y - 8 * s, 12 * s, 14 * s);
+
+            // Pupils
+            let lookX = sin(time * 0.05) * 2 * s;
+            fill('#000');
+            noStroke();
+            ellipse(x - 10 * s + lookX, y - 8 * s, 5 * s, 7 * s);
+            ellipse(x + 10 * s + lookX, y - 8 * s, 5 * s, 7 * s);
+
+            // Cute blush
+            fill(255, 150, 150, 150);
+            ellipse(x - 18 * s, y, 8 * s, 5 * s);
+            ellipse(x + 18 * s, y, 8 * s, 5 * s);
+
+            // Happy smile
+            stroke('#000');
+            strokeWeight(2 * s);
+            noFill();
+            arc(x, y + 5 * s, 16 * s, 12 * s, 0.2, PI - 0.2);
         }
 
         // Confetti system
